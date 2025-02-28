@@ -33,7 +33,7 @@ jobs:
       - name: Archive Executable
         run: |
           mkdir -p artifact
-          cp -r build/windows/runner/Release/* artifact/
+          cp -r ../build/windows/x64/runner/Release/chrome_dino.exe
         shell: bash
 
       - name: Upload Artifact
