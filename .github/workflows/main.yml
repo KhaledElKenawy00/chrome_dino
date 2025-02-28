@@ -31,12 +31,12 @@ jobs:
         run: flutter build windows --release --verbose
 
       - name: Debug - List Build Directory
-        run: dir build\windows\runner\Release
+        run: dir build\windows\x64\runner\Release
 
       - name: Archive Executable
         run: |
           mkdir -Force artifact
-          Copy-Item -Path "build/windows/runner/Release/chrome_dino.exe" -Destination "artifact/"
+          Copy-Item -Path "build/windows/x64/runner/Release/chrome_dino.exe" -Destination "artifact/"
         shell: pwsh
 
       - name: Upload Artifact
