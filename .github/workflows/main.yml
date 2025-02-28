@@ -33,11 +33,11 @@ jobs:
       - name: Archive Executable
         run: |
           mkdir -p artifact
-          cp -r ../build/windows/x64/runner/Release/chrome_dino.exe
+          cp -r ../build/windows/x64/runner/Release/chrome_dino.exe artifact/
         shell: bash
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4  # Updated to v4
+        uses: actions/upload-artifact@v4
         with:
           name: flutter-windows-exe
           path: artifact/
