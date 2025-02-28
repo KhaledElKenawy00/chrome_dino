@@ -27,9 +27,6 @@ jobs:
       - name: Build Windows EXE
         run: flutter build windows --release
 
-      - name: Zip Windows Build
-        run: Compress-Archive -Path build\windows\runner\Release\* -DestinationPath build\windows\MyApp.zip
-
       - name: Upload to Releases
         uses: ncipollo/release-action@v1
         with:
