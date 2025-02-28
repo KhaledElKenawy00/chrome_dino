@@ -1,0 +1,38 @@
+on:
+  push:
+    branches:
+      - main
+
+name: Build Windows App
+
+jobs:
+  build:
+    name: Build and Release EXE
+    runs-on: windows-latest  # Use Windows for building .exe
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Enable Windows Support
+        run: flutter config --enable-windows-desktop
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Windows EXE
+        run: flutter build windows --release
+
+      - name: Zip Windows Build
+        run: Compress-Archive -Path build\windows\runner\Release\* -DestinationPath build\windows\MyApp.zip
+
+      - name: Upload to Releases
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "build/windows/MyApp.zip"
+          tag: v0.0.1
+          token: ${{ secrets.TOKEN }}
