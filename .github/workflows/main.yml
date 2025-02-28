@@ -30,6 +30,6 @@ jobs:
       - name: Upload to Releases
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "build/windows/MyApp.zip"
+          artifacts: "../Built build/windows/x64/runner/Release/chrome_dino.exe"
           tag: v0.0.1
           token: ${{ secrets.TOKEN }}  # Use GitHub's built-in token
