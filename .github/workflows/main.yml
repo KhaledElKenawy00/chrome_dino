@@ -1,35 +1,43 @@
+name: Build Flutter Windows Executable
+
 on:
   push:
     branches:
-      - main
-
-name: Build Windows App
+      - main  # Trigger on pushes to the main branch
+  pull_request:
+    branches:
+      - main  # Trigger on pull requests to the main branch
 
 jobs:
   build:
-    name: Build and Release EXE
-    runs-on: windows-latest  # Use Windows for building .exe
+    runs-on: windows-latest  # Use a Windows runner
+
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Setup Flutter
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
-
-      - name: Enable Windows Support
-        run: flutter config --enable-windows-desktop
+          channel: stable  # Use the stable Flutter channel
 
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build Windows EXE
-        run: flutter build windows --release
+      - name: Enable Windows Desktop
+        run: flutter config --enable-windows-desktop
 
-      - name: Upload to Releases
-        uses: ncipollo/release-action@v1
+      - name: Build Windows Executable
+        run: flutter build windows
+
+      - name: Archive Executable
+        run: |
+          mkdir -p artifact
+          cp -r build/windows/runner/Release/* artifact/
+        shell: bash
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
         with:
-          artifacts: "../Built build/windows/x64/runner/Release/chrome_dino.exe"
-          tag: v0.0.1
-          token: ${{ secrets.TOKEN }}  # Use GitHub's built-in token
+          name: flutter-windows-exe
+          path: artifact/
