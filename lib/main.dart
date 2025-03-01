@@ -1,8 +1,13 @@
+import 'dart:io';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:restart_app/restart_app.dart';
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:serial_port_win32/serial_port_win32.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:process_run/shell.dart';
 
 void main() {
   runApp(DinoApp());
@@ -34,40 +39,54 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
   int score = 0;
   int jumpCount = 0;
   double speedMultiplier = 1.0;
+  List<String> ports = [];
+  bool isArduinoConnected = false;
 
   SerialPort? port;
   Timer? serialListener;
-  String buttonState = "Button Not Pressed";
 
   @override
   void initState() {
     super.initState();
     startGame();
     startSpeedTimer();
-    connectToArduino();
+    detectCOMPortAndConnect();
   }
 
-  void connectToArduino() {
+  void detectCOMPortAndConnect() {
+    ports = SerialPort.getAvailablePorts();
+
+    if (ports.isNotEmpty) {
+      setState(() {
+        String comPort = ports.first; // Pick the first available port
+        isArduinoConnected = true;
+        connectToArduino(comPort);
+        print("🔍 Found COM Port: $comPort");
+      });
+      return;
+    }
+    if (ports.isEmpty) {
+      print("🔍NOT Found COM Port");
+      return;
+    }
+  }
+
+  void connectToArduino(String comPort) {
     try {
-      port = SerialPort("COM4"); // Ensure this is the correct port
+      port = SerialPort(comPort);
 
       if (!port!.isOpened) {
         port!.open();
       }
 
       if (port!.isOpened) {
-        print("✅ Connected to Arduino");
+        print("✅ Connected to Arduino on $comPort");
         startListening();
       } else {
-        print("❌ Failed to connect to Arduino");
+        print("❌ Failed to connect to $comPort");
       }
     } catch (e) {
       print("⚠️ Error: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Failed to connect to Arduino. Check COM Port!"),
-        ),
-      );
     }
   }
 
@@ -130,7 +149,9 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
 
         for (double cactus in cactusX) {
           if (cactus < 0.2 && cactus > -0.2 && dinoY > 0.8) {
-            gameOver();
+            if (port != null && port!.isOpened) {
+              gameOver();
+            }
           }
         }
       });
@@ -203,50 +224,89 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
   @override
   void dispose() {
     serialListener?.cancel();
-    port?.close();
     super.dispose();
+  }
+
+  void restartApplication() async {
+    String executable = Platform.resolvedExecutable;
+    String script = Platform.script.toFilePath();
+
+    if (Platform.isWindows) {
+      await Shell().run('taskkill /F /IM ${executable.split("\\").last}');
+      await Process.start(executable, [script]);
+      exit(0);
+    } else {
+      await Restart.restartApp();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade200,
-      body: Padding(
-        padding: const EdgeInsets.only(bottom: 100),
-        child: Stack(
-          children: [
-            Align(
-              alignment: Alignment(0, dinoY),
-              child: Image.asset(
-                'assets/images/dino.gif',
-                height: 100,
-                width: 100,
+      body:
+          !isArduinoConnected
+              ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Center(
+                    child: Text(
+                      "Aurduino not Connected please check ports again ",
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      restartApplication();
+                    },
+                    child: Text("Restart App"),
+                  ),
+                ],
+              )
+              : Padding(
+                padding: const EdgeInsets.only(bottom: 100),
+                child: Stack(
+                  children: [
+                    Align(
+                      alignment: Alignment(0, dinoY),
+                      child: Image.asset(
+                        'assets/images/dino.gif',
+                        height: 100,
+                        width: 100,
+                      ),
+                    ),
+                    for (double cactus in cactusX)
+                      Align(
+                        alignment: Alignment(cactus, 1),
+                        child: Image.asset(
+                          "assets/images/cactus.png",
+                          width: 60,
+                        ),
+                      ),
+                    Positioned(
+                      top: 20,
+                      right: 20,
+                      child: Text(
+                        "Score: $score",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 50,
+                      right: 20,
+                      child: Text(
+                        "Port: ${ports.first}",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            for (double cactus in cactusX)
-              Align(
-                alignment: Alignment(cactus, 1),
-                child: Image.asset("assets/images/cactus.png", width: 60),
-              ),
-            Positioned(
-              top: 20,
-              right: 20,
-              child: Text(
-                "Score: $score",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-            ),
-            Positioned(
-              top: 80,
-              right: 20,
-              child: Text(
-                "Button: $buttonState",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
