@@ -1,0 +1,46 @@
+name: Build Flutter Windows Executable
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Enable Windows Desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Build Windows Executable
+        run: flutter build windows --release --verbose
+
+      - name: Debug - List Build Directory
+        run: dir build\windows\x64\runner\Release
+
+      - name: Archive Executable
+        run: |
+          mkdir -Force artifact
+          Copy-Item -Path "build/windows/x64/runner/Release/chrome_dino.exe" -Destination "artifact/"
+        shell: pwsh
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-windows-exe
+          path: artifact/chrome_dino.exe
