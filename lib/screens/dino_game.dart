@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:serial_port_win32/serial_port_win32.dart';
@@ -63,9 +64,8 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
             32,
             timeout: Duration(seconds: 2),
           );
-          String receivedData = String.fromCharCodes(data).trim();
 
-          if (receivedData.contains("JUMP")) {
+          if (data.isNotEmpty) {
             print("🚀 Jump Signal Received!");
             setState(() => jump());
           }
@@ -81,14 +81,16 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
       if (port != null && port!.isOpened) {
         try {
           Uint8List data = await port!.readBytes(
-            32,
+            1024,
             timeout: Duration(seconds: 2),
           );
 
           if (data.isNotEmpty) {
-            // قيمة الضغط المطلوبة للقفز
-            print("🚀 Jump Signal from FSR!");
-            setState(() => jump());
+            String message = utf8.decode(data);
+            if (message.contains("JUMP")) {
+              print("🚀 FSR Signal Received! $message");
+              setState(() => jump(jumpVelocity: 0.1));
+            }
           }
         } catch (e) {
           print("⚠️ Serial Read Error: $e");
