@@ -87,10 +87,9 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
 
           if (data.isNotEmpty) {
             String message = utf8.decode(data);
-            if (message.contains("JUMP")) {
-              print("🚀 FSR Signal Received! $message");
-              setState(() => jump(jumpVelocity: 0.1));
-            }
+
+            print("🚀 FSR Signal Received! $message");
+            setState(() => jump(jumpVelocity: 0.1));
           }
         } catch (e) {
           print("⚠️ Serial Read Error: $e");
