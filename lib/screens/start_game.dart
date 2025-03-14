@@ -1,3 +1,4 @@
+import 'package:chrome_dino/constant/const.dart';
 import 'package:chrome_dino/constant/dimentions.dart';
 import 'package:chrome_dino/screens/root_screen.dart';
 import 'package:flutter/material.dart';
@@ -10,8 +11,6 @@ class StartGamePage extends StatefulWidget {
 }
 
 class _StartGamePageState extends State<StartGamePage> {
-  double _selectedSpeed = 0.01; // Default speed factor
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,7 +39,7 @@ class _StartGamePageState extends State<StartGamePage> {
             ),
             const SizedBox(height: 20),
             DropdownButton<double>(
-              value: _selectedSpeed,
+              value: selectedSpeed,
               items:
                   List.generate(9, (index) => (index + 1) * 0.01)
                       .map<DropdownMenuItem<double>>(
@@ -52,7 +51,7 @@ class _StartGamePageState extends State<StartGamePage> {
                       .toList(),
               onChanged: (value) {
                 setState(() {
-                  _selectedSpeed = value!;
+                  selectedSpeed = value!;
                 });
               },
             ),

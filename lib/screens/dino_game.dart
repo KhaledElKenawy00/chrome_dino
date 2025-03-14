@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:chrome_dino/constant/const.dart';
 import 'package:chrome_dino/screens/root_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:serial_port_win32/serial_port_win32.dart';
@@ -131,7 +132,7 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
         }
 
         for (int i = 0; i < cactusX.length; i++) {
-          cactusX[i] -= widget.speedFactor * speedMultiplier;
+          cactusX[i] -= selectedSpeed * speedMultiplier;
           if (cactusX[i] < -1.5) {
             cactusX[i] = 1.5;
             score++;
