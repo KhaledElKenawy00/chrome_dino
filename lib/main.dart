@@ -1,5 +1,5 @@
 import 'package:chrome_dino/providers/dion_provider.dart';
-import 'package:chrome_dino/screens/root_screen.dart';
+import 'package:chrome_dino/screens/logain_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -14,7 +14,7 @@ class DinoApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (context) => DinoGameProvider()),
       ],
-      child: MaterialApp(debugShowCheckedModeBanner: false, home: RootScreen()),
+      child: MaterialApp(debugShowCheckedModeBanner: false, home: LoginPage()),
     );
   }
 }

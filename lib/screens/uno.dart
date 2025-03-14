@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:serial_port_win32/serial_port_win32.dart';
 
@@ -10,9 +10,8 @@ class Uno extends StatefulWidget {
   State<Uno> createState() => _UnoState();
 }
 
-String message = '';
-
 class _UnoState extends State<Uno> {
+  Timer? serialListener;
   bool isArduinoConnectted() {
     // الحصول على المنافذ المتاحة
     final ports = SerialPort.getAvailablePorts();
@@ -69,8 +68,8 @@ class _UnoState extends State<Uno> {
     } catch (e) {
       print("❌ خطأ أثناء البحث عن Arduino: $e");
     }
-
-    return arduinoPort!;
+    listenToArduino(arduinoPort!);
+    return arduinoPort;
   }
 
   void listenToArduino(SerialPort port) async {
@@ -81,23 +80,27 @@ class _UnoState extends State<Uno> {
 
     print("🔄 بدء الاستماع إلى Arduino...");
 
-    while (port.isOpened) {
-      try {
-        final data = await port.readBytes(
-          1024,
-          timeout: Duration(milliseconds: 500),
-        );
+    serialListener = Timer.periodic(Duration(milliseconds: 100), (timer) async {
+      while (port.isOpened) {
+        try {
+          final data = await port.readBytes(
+            1024,
+            timeout: Duration(milliseconds: 500),
+          );
 
-        if (data.isNotEmpty) {
-          message = utf8.decode(data);
-          print("📡 البيانات المستلمة: $message");
+          if (data.isNotEmpty) {
+            setState(() {
+              String message = utf8.decode(data);
+              print("📡 البيانات المستلمة: $message");
+            });
+          }
+        } catch (e) {
+          print("❌ خطأ أثناء القراءة: $e");
         }
-      } catch (e) {
-        print("❌ خطأ أثناء القراءة: $e");
       }
-    }
 
-    print("🔴 توقف الاستماع. المنفذ مغلق.");
+      print("🔴 توقف الاستماع. المنفذ مغلق.");
+    });
   }
 
   @override
@@ -110,7 +113,10 @@ class _UnoState extends State<Uno> {
     return Scaffold(
       appBar: AppBar(title: Text("UNO")),
       body: Center(
-        child: InkWell(onTap: () => isArduinoConnectted(), child: Text("UNO ")),
+        child: InkWell(
+          onTap: () => checkArduinoConnecttedPortName(),
+          child: Text("UNO "),
+        ),
       ),
     );
   }

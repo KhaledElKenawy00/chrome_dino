@@ -1,13 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
+import 'package:chrome_dino/screens/root_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:serial_port_win32/serial_port_win32.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 class DinoGameScreen extends StatefulWidget {
   final String connectedArduinoPort;
-  const DinoGameScreen({required this.connectedArduinoPort});
+  final double speedFactor;
+
+  const DinoGameScreen({
+    required this.speedFactor,
+    required this.connectedArduinoPort,
+  });
 
   @override
   _DinoGameScreenState createState() => _DinoGameScreenState();
@@ -20,82 +24,97 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
   bool isJumping = false;
   List<double> cactusX = [1.5, 3.0, 4.5];
   Timer? gameLoop;
-  Timer? speedTimer;
+  SerialPort? port;
+  Timer? serialListener;
   int score = 0;
   int jumpCount = 0;
   double speedMultiplier = 1.0;
-
-  SerialPort? port;
-  Timer? serialListener;
-  bool isArduinoConnected = false;
+  bool isListening = true;
 
   @override
   void initState() {
     super.initState();
     connectToArduino();
     startGame();
-    // startSpeedTimer();
   }
 
   void connectToArduino() {
-    try {
-      port = SerialPort(widget.connectedArduinoPort);
-      if (!port!.isOpened) port!.open();
-
-      if (port!.isOpened) {
-        setState(() => isArduinoConnected = true);
-        // startListening();
-        startListeningFsr();
-        print("✅ Connected to Arduino on ${widget.connectedArduinoPort}");
-      } else {
-        showToast("❌ Failed to connect to Arduino", isError: true);
+    port = SerialPort(widget.connectedArduinoPort);
+    if (!port!.isOpened) {
+      try {
+        port!.open();
+      } catch (e) {
+        print("❌ Error opening port: $e");
+        return;
       }
-    } catch (e) {
-      print("⚠️ Connection Error: $e");
-      showToast("Connection error: $e", isError: true);
     }
-  }
 
-  void startListening() {
     serialListener = Timer.periodic(Duration(milliseconds: 100), (timer) async {
-      if (port != null && port!.isOpened) {
-        try {
-          Uint8List data = await port!.readBytes(
-            32,
-            timeout: Duration(seconds: 2),
-          );
+      if (!port!.isOpened) {
+        print("⚠️ Arduino Disconnected. Stopping listener...");
+        stopListening();
+        return;
+      }
 
-          if (data.isNotEmpty) {
-            print("🚀 Jump Signal Received!");
+      try {
+        final data = await port!.readBytes(
+          1024,
+          timeout: Duration(milliseconds: 500),
+        );
+        if (data.isNotEmpty) {
+          String message = utf8.decode(data).trim();
+          int? value = int.tryParse(message);
+          if (value != null && value > 400) {
             setState(() => jump());
           }
-        } catch (e) {
-          print("⚠️ Serial Read Error: $e");
+          print("📡 Received data: $message");
+        }
+      } catch (e) {
+        String errorMessage = e.toString();
+        if (errorMessage.contains("Win32 Error Code is 5") ||
+            errorMessage.contains("Win32 Error Code is 6") ||
+            errorMessage.contains("Win32 Error Code is 7") ||
+            errorMessage.contains("Win32 Error Code is 8") ||
+            errorMessage.contains("Win32 Error Code is 3") ||
+            errorMessage.contains("Win32 Error Code is 4") ||
+            errorMessage.contains("Win32 Error Code is 1") ||
+            errorMessage.contains("Win32 Error Code is 2") ||
+            errorMessage.contains("Win32 Error Code is 9") ||
+            errorMessage.contains("Win32 Error Code is 10") ||
+            errorMessage.contains("Win32 Error Code is 0") ||
+            errorMessage.contains("ClearCommError")) {
+          print("⚠️ تم فصل جهاز Arduino. إيقاف الاستماع...");
+          stopListening();
         }
       }
     });
   }
 
-  void startListeningFsr() {
-    serialListener = Timer.periodic(Duration(milliseconds: 100), (timer) async {
+  void stopListening() {
+    try {
+      serialListener?.cancel();
       if (port != null && port!.isOpened) {
-        try {
-          Uint8List data = await port!.readBytes(
-            1024,
-            timeout: Duration(seconds: 2),
-          );
-
-          if (data.isNotEmpty) {
-            String message = utf8.decode(data);
-
-            print("🚀 FSR Signal Received! $message");
-            setState(() => jump(jumpVelocity: 0.1));
-          }
-        } catch (e) {
-          print("⚠️ Serial Read Error: $e");
-        }
+        port!.close();
       }
-    });
+      isListening = false;
+      print("🛑 Stopped listening to Arduino.");
+    } catch (e) {
+      String errorMessage = e.toString();
+      if (errorMessage.contains("Win32 Error Code is 5") ||
+          errorMessage.contains("Win32 Error Code is 6") ||
+          errorMessage.contains("Win32 Error Code is 7") ||
+          errorMessage.contains("Win32 Error Code is 8") ||
+          errorMessage.contains("Win32 Error Code is 3") ||
+          errorMessage.contains("Win32 Error Code is 4") ||
+          errorMessage.contains("Win32 Error Code is 1") ||
+          errorMessage.contains("Win32 Error Code is 2") ||
+          errorMessage.contains("Win32 Error Code is 9") ||
+          errorMessage.contains("Win32 Error Code is 10") ||
+          errorMessage.contains("ClearCommError")) {
+        print("⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️v");
+        stopListening();
+      }
+    }
   }
 
   void startGame() {
@@ -112,7 +131,7 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
         }
 
         for (int i = 0; i < cactusX.length; i++) {
-          cactusX[i] -= 0.02 * speedMultiplier;
+          cactusX[i] -= widget.speedFactor * speedMultiplier;
           if (cactusX[i] < -1.5) {
             cactusX[i] = 1.5;
             score++;
@@ -128,14 +147,6 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
     });
   }
 
-  // void startSpeedTimer() {
-  //   speedTimer = Timer.periodic(Duration(seconds: 10), (timer) {
-  //     setState(() {
-  //       speedMultiplier += 0.2;
-  //     });
-  //   });
-  // }
-
   void jump({double jumpVelocity = 0.09}) {
     if (jumpCount < 2) {
       setState(() {
@@ -148,24 +159,49 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
 
   void gameOver() {
     gameLoop?.cancel();
-    speedTimer?.cancel();
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text("Game Over"),
-            content: Text("Try again!"),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  resetGame();
-                },
-                child: Text("Restart"),
-              ),
-            ],
-          ),
-    );
+    if (isListening) {
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: Text("Game Over"),
+              content: Text("Try again!"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    resetGame();
+                  },
+                  child: Text("Restart"),
+                ),
+              ],
+            ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              backgroundColor: Colors.amberAccent.shade100,
+              title: Text("⚠️⚠️Warninggg⚠️⚠️"),
+              content: Text("Device is not connected 🛑🛑"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        fullscreenDialog: true,
+                        builder: (BuildContext context) => RootScreen(),
+                      ),
+                    );
+                  },
+                  child: Text("Restart"),
+                ),
+              ],
+            ),
+      );
+    }
   }
 
   void resetGame() {
@@ -176,25 +212,12 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
       jumpCount = 0;
       speedMultiplier = 1.0;
       startGame();
-      // startSpeedTimer();
     });
-  }
-
-  void showToast(String message, {bool isError = false}) {
-    Fluttertoast.showToast(
-      msg: message,
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      backgroundColor: isError ? Colors.red : Colors.green,
-      textColor: Colors.white,
-      fontSize: 16.0,
-    );
   }
 
   @override
   void dispose() {
-    serialListener?.cancel();
-    port?.close();
+    stopListening();
     super.dispose();
   }
 
@@ -202,55 +225,23 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade200,
-      body:
-          !isArduinoConnected
-              ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text("⚠️ Arduino not Connected"),
-                    SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () => connectToArduino(),
-                      child: Text("Retry Connection"),
-                    ),
-                  ],
-                ),
-              )
-              : Padding(
-                padding: const EdgeInsets.only(bottom: 100),
-                child: Stack(
-                  children: [
-                    Align(
-                      alignment: Alignment(0, dinoY),
-                      child: Image.asset(
-                        'assets/images/dino.gif',
-                        height: 300,
-                        width: 300,
-                      ),
-                    ),
-                    for (double cactus in cactusX)
-                      Align(
-                        alignment: Alignment(cactus, 1),
-                        child: Image.asset(
-                          "assets/images/cactus.png",
-                          width: 150,
-                        ),
-                      ),
-                    Positioned(
-                      top: 50,
-                      right: 20,
-                      child: Text(
-                        "Port: ${widget.connectedArduinoPort}",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+      body: Stack(
+        children: [
+          Align(
+            alignment: Alignment(0, dinoY),
+            child: Image.asset(
+              'assets/images/dino.gif',
+              height: 300,
+              width: 300,
+            ),
+          ),
+          for (double cactus in cactusX)
+            Align(
+              alignment: Alignment(cactus, 1),
+              child: Image.asset("assets/images/cactus.png", width: 150),
+            ),
+        ],
+      ),
     );
   }
 }
