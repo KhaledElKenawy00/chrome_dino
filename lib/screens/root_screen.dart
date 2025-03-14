@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:serial_port_win32/serial_port_win32.dart';
 
 class RootScreen extends StatefulWidget {
+  final double speedFator;
+
+  const RootScreen({this.speedFator = 0.02});
   @override
   _RootScreenState createState() => _RootScreenState();
 }
@@ -13,7 +16,6 @@ class _RootScreenState extends State<RootScreen> {
   String? connectedArduinoPort;
   bool isArduinoConnected = false;
   List<String> ports = [];
-  double selectedSpeedFactor = 0.02;
 
   @override
   void initState() {
@@ -54,7 +56,7 @@ class _RootScreenState extends State<RootScreen> {
               MaterialPageRoute(
                 builder:
                     (context) => DinoGameScreen(
-                      speedFactor: selectedSpeedFactor,
+                      speedFactor: widget.speedFator,
                       connectedArduinoPort: connectedArduinoPort!,
                     ),
               ),

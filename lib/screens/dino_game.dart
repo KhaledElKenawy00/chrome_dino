@@ -9,7 +9,7 @@ class DinoGameScreen extends StatefulWidget {
   final double speedFactor;
 
   const DinoGameScreen({
-    required this.speedFactor,
+    this.speedFactor = 0.02,
     required this.connectedArduinoPort,
   });
 

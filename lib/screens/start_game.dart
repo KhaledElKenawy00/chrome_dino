@@ -1,3 +1,4 @@
+import 'package:chrome_dino/constant/dimentions.dart';
 import 'package:chrome_dino/screens/root_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +16,7 @@ class _StartGamePageState extends State<StartGamePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text("Start Game"),
         leading: IconButton(
           onPressed: () {
@@ -82,7 +84,7 @@ class GameScreen extends StatelessWidget {
       body: Center(
         child: Text(
           "🚀 سرعة اللعبة: $speedFactor",
-          style: const TextStyle(fontSize: 24),
+          style: TextStyle(fontSize: Dimentions.hightPercentage(context, 2)),
         ),
       ),
     );
