@@ -95,7 +95,7 @@ BEGIN
             VALUE "InternalName", "chrome_dino" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
             VALUE "OriginalFilename", "chrome_dino.exe" "\0"
-            VALUE "ProductName", "chrome_dino" "\0"
+            VALUE "ProductName", "RFI" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

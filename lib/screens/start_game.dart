@@ -1,5 +1,6 @@
 import 'package:chrome_dino/constant/const.dart';
 import 'package:chrome_dino/constant/dimentions.dart';
+import 'package:chrome_dino/screens/emg_chart_page.dart';
 import 'package:chrome_dino/screens/root_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -33,36 +34,87 @@ class _StartGamePageState extends State<StartGamePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              "اختر سرعة اللعبة:",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            DropdownButton<double>(
-              value: selectedSpeed,
-              items:
-                  List.generate(9, (index) => (index + 1) * 0.01)
-                      .map<DropdownMenuItem<double>>(
-                        (value) => DropdownMenuItem(
-                          value: value,
-                          child: Text(value.toStringAsFixed(2)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Column(
+                  children: [
+                    const Text(
+                      "اختر سرعة اللعبة:",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    DropdownButton<double>(
+                      value: selectedSpeed,
+                      items:
+                          List.generate(9, (index) => (index + 1) * 0.01)
+                              .map<DropdownMenuItem<double>>(
+                                (value) => DropdownMenuItem(
+                                  value: value,
+                                  child: Text(value.toStringAsFixed(2)),
+                                ),
+                              )
+                              .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedSpeed = value!;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => RootScreen()),
+                        );
+                      },
+                      child: const Text("ابدأ اللعبة"),
+                    ),
+                  ],
+                ),
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (BuildContext context) => EmgChartPage(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    height: Dimentions.hightPercentage(context, 13),
+                    width: Dimentions.widthPercentage(context, 25),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(
+                        Dimentions.radiusPercentage(context, 5),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Text(
+                          "Show EMG Curves",
+                          style: TextStyle(
+                            fontFamily: "Lemonada",
+                            fontSize: Dimentions.fontPercentage(context, 3),
+                            color: Colors.white,
+                            fontStyle: FontStyle.italic,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
-                      )
-                      .toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedSpeed = value!;
-                });
-              },
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (context) => RootScreen()));
-              },
-              child: const Text("ابدأ اللعبة"),
+                        Image.asset(
+                          "assets/images/curve_icon.png",
+                          height: Dimentions.hightPercentage(context, 10),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

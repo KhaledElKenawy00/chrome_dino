@@ -12,6 +12,9 @@ class Uno extends StatefulWidget {
 
 class _UnoState extends State<Uno> {
   Timer? serialListener;
+  SerialPort? arduinoPort;
+  bool isListening = true;
+
   bool isArduinoConnectted() {
     // الحصول على المنافذ المتاحة
     final ports = SerialPort.getAvailablePorts();
@@ -55,7 +58,7 @@ class _UnoState extends State<Uno> {
 
     // البحث عن منفذ Arduino عبر معرفات الأجهزة
     final List<PortInfo> portInfoList = SerialPort.getPortsWithFullMessages();
-    SerialPort? arduinoPort;
+
     try {
       for (var portInfo in portInfoList) {
         print("🔍 فحص المنفذ: ${portInfo.portName}");
@@ -66,10 +69,52 @@ class _UnoState extends State<Uno> {
         }
       }
     } catch (e) {
-      print("❌ خطأ أثناء البحث عن Arduino: $e");
+      String errorMessage = e.toString();
+      if (errorMessage.contains("Win32 Error Code is 5") ||
+          errorMessage.contains("Win32 Error Code is 6") ||
+          errorMessage.contains("Win32 Error Code is 7") ||
+          errorMessage.contains("Win32 Error Code is 8") ||
+          errorMessage.contains("Win32 Error Code is 3") ||
+          errorMessage.contains("Win32 Error Code is 4") ||
+          errorMessage.contains("Win32 Error Code is 1") ||
+          errorMessage.contains("Win32 Error Code is 2") ||
+          errorMessage.contains("Win32 Error Code is 9") ||
+          errorMessage.contains("Win32 Error Code is 10") ||
+          errorMessage.contains("Win32 Error Code is 0") ||
+          errorMessage.contains("ClearCommError")) {
+        print("⚠️ تم فصل جهاز Arduino. إيقاف الاستماع...");
+        stopListening();
+      }
     }
     listenToArduino(arduinoPort!);
-    return arduinoPort;
+    return arduinoPort!;
+  }
+
+  void stopListening() {
+    try {
+      serialListener?.cancel();
+      if (arduinoPort != null && arduinoPort!.isOpened) {
+        arduinoPort!.close();
+      }
+      isListening = false;
+      print("🛑 Stopped listening to Arduino.");
+    } catch (e) {
+      String errorMessage = e.toString();
+      if (errorMessage.contains("Win32 Error Code is 5") ||
+          errorMessage.contains("Win32 Error Code is 6") ||
+          errorMessage.contains("Win32 Error Code is 7") ||
+          errorMessage.contains("Win32 Error Code is 8") ||
+          errorMessage.contains("Win32 Error Code is 3") ||
+          errorMessage.contains("Win32 Error Code is 4") ||
+          errorMessage.contains("Win32 Error Code is 1") ||
+          errorMessage.contains("Win32 Error Code is 2") ||
+          errorMessage.contains("Win32 Error Code is 9") ||
+          errorMessage.contains("Win32 Error Code is 10") ||
+          errorMessage.contains("ClearCommError")) {
+        print("⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️v");
+        stopListening();
+      }
+    }
   }
 
   void listenToArduino(SerialPort port) async {
@@ -91,7 +136,9 @@ class _UnoState extends State<Uno> {
           if (data.isNotEmpty) {
             setState(() {
               String message = utf8.decode(data);
-              print("📡 البيانات المستلمة: $message");
+
+              int value = int.tryParse(message) ?? 0;
+              print("📡 البيانات المستلمة: $value");
             });
           }
         } catch (e) {

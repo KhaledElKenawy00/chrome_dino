@@ -35,59 +35,35 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
   @override
   void initState() {
     super.initState();
-    connectToArduino();
+    listenToArduino(SerialPort(widget.connectedArduinoPort));
     startGame();
   }
 
-  void connectToArduino() {
-    port = SerialPort(widget.connectedArduinoPort);
-    if (!port!.isOpened) {
-      try {
-        port!.open();
-      } catch (e) {
-        print("❌ Error opening port: $e");
-        return;
-      }
+  void listenToArduino(SerialPort port) async {
+    if (!port.isOpened) {
+      print("❌ المنفذ غير مفتوح. فتح الاتصال...");
+      port.open();
     }
 
-    serialListener = Timer.periodic(Duration(milliseconds: 100), (timer) async {
-      if (!port!.isOpened) {
-        print("⚠️ Arduino Disconnected. Stopping listener...");
-        stopListening();
-        return;
-      }
+    print("🔄 بدء الاستماع إلى Arduino...");
 
-      try {
-        final data = await port!.readBytes(
-          1024,
-          timeout: Duration(milliseconds: 500),
-        );
-        if (data.isNotEmpty) {
-          String message = utf8.decode(data).trim();
-          int? value = int.tryParse(message);
-          if (value != null && value > 400) {
+    serialListener = Timer.periodic(Duration(milliseconds: 100), (timer) async {
+      while (port.isOpened) {
+        try {
+          final data = await port.readBytes(
+            1024,
+            timeout: Duration(milliseconds: 500),
+          );
+
+          if (data.isNotEmpty) {
             setState(() => jump());
           }
-          print("📡 Received data: $message");
-        }
-      } catch (e) {
-        String errorMessage = e.toString();
-        if (errorMessage.contains("Win32 Error Code is 5") ||
-            errorMessage.contains("Win32 Error Code is 6") ||
-            errorMessage.contains("Win32 Error Code is 7") ||
-            errorMessage.contains("Win32 Error Code is 8") ||
-            errorMessage.contains("Win32 Error Code is 3") ||
-            errorMessage.contains("Win32 Error Code is 4") ||
-            errorMessage.contains("Win32 Error Code is 1") ||
-            errorMessage.contains("Win32 Error Code is 2") ||
-            errorMessage.contains("Win32 Error Code is 9") ||
-            errorMessage.contains("Win32 Error Code is 10") ||
-            errorMessage.contains("Win32 Error Code is 0") ||
-            errorMessage.contains("ClearCommError")) {
-          print("⚠️ تم فصل جهاز Arduino. إيقاف الاستماع...");
-          stopListening();
+        } catch (e) {
+          print("❌ خطأ أثناء القراءة: $e");
         }
       }
+
+      print("🔴 توقف الاستماع. المنفذ مغلق.");
     });
   }
 
