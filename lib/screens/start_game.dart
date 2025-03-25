@@ -1,6 +1,3 @@
-import 'dart:async';
-import 'dart:convert';
-
 import 'package:chrome_dino/constant/const.dart';
 import 'package:chrome_dino/constant/dimentions.dart';
 import 'package:chrome_dino/screens/emg_chart_page.dart';
@@ -16,10 +13,7 @@ class StartGamePage extends StatefulWidget {
 }
 
 class _StartGamePageState extends State<StartGamePage> {
-  StreamController<List<int>> _serialStreamController = StreamController();
-  StreamSubscription<List<int>>? _serialSubscription;
   SerialPort? arduinoPort;
-  @override
   void checkArduinoConnectedPortName() {
     final ports = SerialPort.getAvailablePorts();
     if (ports.isEmpty) {
@@ -34,39 +28,10 @@ class _StartGamePageState extends State<StartGamePage> {
           portInfo.friendlyName.toLowerCase().contains("arduino")) {
         print("✅ تم العثور على Arduino في: ${portInfo.portName}");
         arduinoPort = SerialPort(portInfo.portName, BaudRate: 9600);
-        if (arduinoPort != null) {
-          listenToArduino(arduinoPort!);
-        }
+        if (arduinoPort != null) {}
         break;
       }
     }
-  }
-
-  void listenToArduino(SerialPort port) {
-    if (!port.isOpened) {
-      print("❌ المنفذ غير مفتوح. فتح الاتصال...");
-      port.open();
-    }
-
-    print("🔄 بدء الاستماع إلى Arduino...");
-    _serialSubscription = _serialStreamController.stream.listen((data) {
-      if (data.isNotEmpty) {
-        String message = utf8.decode(data);
-        RegExp regexRight = RegExp(r'right=\s*(-?\d+)');
-        RegExp regexLeft = RegExp(r'left=\s*(-?\d+)');
-
-        Match? matchRight = regexRight.firstMatch(message);
-        Match? matchLeft = regexLeft.firstMatch(message);
-
-        if (matchRight != null && matchLeft != null) {
-          int rightValue = int.parse(matchRight.group(1)!);
-          int leftValue = int.parse(matchLeft.group(1)!);
-
-          print("✅ Received Right Value: $rightValue");
-          print("✅ Received Left Value: $leftValue");
-        }
-      }
-    });
   }
 
   @override
@@ -112,7 +77,7 @@ class _StartGamePageState extends State<StartGamePage> {
                     DropdownButton<double>(
                       value: selectedSpeed,
                       items:
-                          List.generate(9, (index) => (index + 1) * 0.01)
+                          List.generate(4, (index) => (index + 1) * 0.01)
                               .map<DropdownMenuItem<double>>(
                                 (value) => DropdownMenuItem(
                                   value: value,

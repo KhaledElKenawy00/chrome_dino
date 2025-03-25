@@ -131,7 +131,7 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
     });
   }
 
-  void jump({double jumpVelocity = 0.09}) {
+  void jump({double jumpVelocity = 0.12}) {
     if (jumpCount < 2) {
       setState(() {
         isJumping = true;
