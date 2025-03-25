@@ -56,10 +56,24 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
           );
 
           if (data.isNotEmpty) {
-            setState(() => jump());
+            String message = utf8.decode(data).trim();
+
+            print("📡 البيانات المستلمة: $message");
+
+            if (message.contains("JUMP")) {
+              setState(() => jump());
+              print("⬆️ تنفيذ القفز!");
+            }
           }
         } catch (e) {
-          print("❌ خطأ أثناء القراءة: $e");
+          String errorMessage = e.toString();
+          // Efficiently check for multiple error codes using RegExp
+          if (RegExp(
+            r"Win32 Error Code is (0|1|2|3|4|5|6|7|8|9|10)|ClearCommError",
+          ).hasMatch(errorMessage)) {
+            print("⚠️ Arduino disconnected. Stopping listener...");
+            stopListening();
+          }
         }
       }
 
@@ -77,18 +91,11 @@ class _DinoGameScreenState extends State<DinoGameScreen> {
       print("🛑 Stopped listening to Arduino.");
     } catch (e) {
       String errorMessage = e.toString();
-      if (errorMessage.contains("Win32 Error Code is 5") ||
-          errorMessage.contains("Win32 Error Code is 6") ||
-          errorMessage.contains("Win32 Error Code is 7") ||
-          errorMessage.contains("Win32 Error Code is 8") ||
-          errorMessage.contains("Win32 Error Code is 3") ||
-          errorMessage.contains("Win32 Error Code is 4") ||
-          errorMessage.contains("Win32 Error Code is 1") ||
-          errorMessage.contains("Win32 Error Code is 2") ||
-          errorMessage.contains("Win32 Error Code is 9") ||
-          errorMessage.contains("Win32 Error Code is 10") ||
-          errorMessage.contains("ClearCommError")) {
-        print("⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️v");
+      // Efficiently check for multiple error codes using RegExp
+      if (RegExp(
+        r"Win32 Error Code is (0|1|2|3|4|5|6|7|8|9|10)|ClearCommError",
+      ).hasMatch(errorMessage)) {
+        print("⚠️ Arduino disconnected. Stopping listener...");
         stopListening();
       }
     }

@@ -120,7 +120,12 @@ class _UnoState extends State<Uno> {
   void listenToArduino(SerialPort port) async {
     if (!port.isOpened) {
       print("❌ المنفذ غير مفتوح. فتح الاتصال...");
-      port.open();
+      try {
+        port.open();
+      } catch (e) {
+        print("❌ فشل فتح المنفذ: $e");
+        return;
+      }
     }
 
     print("🔄 بدء الاستماع إلى Arduino...");
@@ -134,12 +139,13 @@ class _UnoState extends State<Uno> {
           );
 
           if (data.isNotEmpty) {
-            setState(() {
-              String message = utf8.decode(data);
+            String message = utf8.decode(data).trim();
 
-              int value = int.tryParse(message) ?? 0;
-              print("📡 البيانات المستلمة: $value");
-            });
+            print("📡 البيانات المستلمة: $message");
+
+            if (message.contains("JUMP")) {
+              print("⬆️ تنفيذ القفز!");
+            }
           }
         } catch (e) {
           print("❌ خطأ أثناء القراءة: $e");
